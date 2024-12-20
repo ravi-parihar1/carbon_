@@ -93,25 +93,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'National Carbon Intensity',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            'National Carbon Intensity',
+
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
 
                         const SizedBox(height: 8),
-                        Text(
-                          '$fetchedIntensity gCO₂/kWh',
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            
+                        Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$fetchedIntensity gCO₂/kWh',
+                            style: TextStyle(
+                              color: Colors.blueAccent,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                          
+                            ),
+                          
                           ),
-
                         ),
                         Divider(
                           color: Colors.white,
@@ -129,10 +136,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(30),
                               decoration: BoxDecoration(
                                 color: fetchedIntensity > 200 ? Colors.red : Colors.green,
-                                borderRadius: BorderRadius.circular(50),
+                                shape: BoxShape.circle,
+                                // borderRadius: BorderRadius.circular(30),
 
                               ),
                               child: Text(
