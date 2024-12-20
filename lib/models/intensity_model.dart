@@ -4,7 +4,7 @@ class CarbonIntensity {
   final int intensity;
 
   CarbonIntensity({required this.from, required this.to, required this.intensity});
-
+ //test
   factory CarbonIntensity.fromJson(Map<String, dynamic> json) {
     return CarbonIntensity(
       from: json['from'],
@@ -13,4 +13,5 @@ class CarbonIntensity {
       intensity: json['intensity']['actual'] ?? 0, // Default to 0 if null
     );
   }
+  //sfs
 }
