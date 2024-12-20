@@ -33,4 +33,5 @@ class CarbonIntensityApi {
       throw Exception('Failed to load daily intensity');
     }
   }
+  //ss
 }
