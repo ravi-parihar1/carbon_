@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../services/carbon_intensity_api.dart'; // Adjust the path to match your project structure
+import '../models/intensity_model.dart';
 
 class DashboardScreen extends StatefulWidget {
   @override
@@ -9,13 +9,19 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final List<double> intensityValues = [250, 260, 240, 245, 255, 250, 270];
   late Future<int> currentIntensity;
+  late Future<List<double>> todayIntensity;
 
   @override
   void initState() {
     super.initState();
     currentIntensity = CarbonIntensityApi.fetchCurrentIntensity();
+    todayIntensity = CarbonIntensityApi.fetchTodayIntensity().then(
+          (intensityList) {
+        // Convert intensity to double for the graph
+        return intensityList.map((item) => item.intensity.toDouble()).toList();
+      },
+    );
   }
 
   @override
@@ -23,8 +29,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Carbon Buddy 🌎'),
+        title: const Text('Carbon Buddy 🌎' , style: TextStyle(
+          color: Colors.white,
+        ),),
         backgroundColor: Colors.black,
+        centerTitle: true,
         elevation: 0,
       ),
       body: Padding(
@@ -32,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Reload Data Button
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -48,12 +58,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onPressed: () {
                     setState(() {
                       currentIntensity = CarbonIntensityApi.fetchCurrentIntensity();
+                      todayIntensity = CarbonIntensityApi.fetchTodayIntensity().then(
+                            (intensityList) => intensityList.map((item) => item.intensity.toDouble()).toList(),
+                      );
                     });
                   },
                 ),
               ],
             ),
             const SizedBox(height: 20),
+
+            // Current Intensity Section
             FutureBuilder<int>(
               future: currentIntensity,
               builder: (context, snapshot) {
@@ -86,6 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+
                         const SizedBox(height: 8),
                         Text(
                           '$fetchedIntensity gCO₂/kWh',
@@ -93,7 +109,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: Colors.blueAccent,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            
                           ),
+
+                        ),
+                        Divider(
+                          color: Colors.white,
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -111,7 +132,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: fetchedIntensity > 200 ? Colors.red : Colors.green,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(50),
+
                               ),
                               child: Text(
                                 fetchedIntensity > 200 ? 'HIGH' : 'LOW',
@@ -131,6 +153,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
             const SizedBox(height: 20),
+
+            // Graph Section
             Text(
               'National half-hourly carbon intensity for the current day:',
               style: TextStyle(
@@ -140,73 +164,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Daily Intensity Line Chart
             Expanded(
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: false),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        interval: 50,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            value.toInt().toString(),
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          );
-                        },
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                        getTitlesWidget: (value, meta) {
-                          return Text(
-                            'H${value.toInt()}',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Colors.grey, width: 1),
-                  ),
-                  lineBarsData: [
-                    LineChartBarData(
-                      isCurved: true,
-                      gradient: LinearGradient(
-                        colors: [Colors.blue, Colors.lightBlueAccent],
-                      ),
-                      spots: intensityValues
-                          .asMap()
-                          .entries
-                          .map((entry) =>
-                          FlSpot(entry.key.toDouble(), entry.value))
-                          .toList(),
-                      barWidth: 3,
-                      dotData: FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blue.withOpacity(0.3),
-                            Colors.transparent,
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+              child: FutureBuilder<List<double>>(
+                future: todayIntensity,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(color: Colors.blueAccent),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text(
+                      'Error fetching data: ${snapshot.error}',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    );
+                  } else if (snapshot.hasData) {
+                    final intensityValues = snapshot.data!;
+                    return LineChart(
+                      LineChartData(
+                        gridData: FlGridData(show: false),
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                              interval: 50,
+                              getTitlesWidget: (value, meta) {
+                                return Text(
+                                  value.toInt().toString(),
+                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                );
+                              },
+                            ),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              getTitlesWidget: (value, meta) {
+                                return Text(
+                                  'H${value.toInt()}',
+                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                );
+                              },
+                            ),
+                          ),
                         ),
+                        borderData: FlBorderData(
+                          show: true,
+                          border: Border.all(color: Colors.grey, width: 1),
+                        ),
+                        lineBarsData: [
+                          LineChartBarData(
+                            isCurved: true,
+                            gradient: LinearGradient(
+                              colors: [Colors.blue, Colors.lightBlueAccent],
+                            ),
+                            spots: intensityValues
+                                .asMap()
+                                .entries
+                                .map((entry) => FlSpot(entry.key.toDouble(), entry.value))
+                                .toList(),
+                            barWidth: 3,
+                            dotData: FlDotData(show: false),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.blue.withOpacity(0.3),
+                                  Colors.transparent,
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ],
+                        minY: 0,
+                        maxY: 300,
+                        minX: 0,
+                        maxX: (intensityValues.length - 1).toDouble(),
                       ),
-                    ),
-                  ],
-                  minY: 0,
-                  maxY: 300,
-                  minX: 0,
-                  maxX: (intensityValues.length - 1).toDouble(),
-                ),
+                    );
+                  }
+                  return const SizedBox();
+                },
               ),
             ),
           ],

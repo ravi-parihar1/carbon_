@@ -19,10 +19,16 @@ class CarbonIntensityApi {
   // Fetch half-hourly intensity
   static Future<List<CarbonIntensity>> fetchTodayIntensity() async {
     final today = DateTime.now().toIso8601String().split('T')[0];
+
     final response = await http.get(Uri.parse('$baseUrl/intensity/date/$today'));
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body)['data'] as List;
-      return data.map((item) => CarbonIntensity.fromJson(item)).toList();
+      // Map the API data to your model
+      return data.map((item) {
+        // Handle the null case for 'actual' intensity
+        return CarbonIntensity.fromJson(item);
+      }).toList();
     } else {
       throw Exception('Failed to load daily intensity');
     }

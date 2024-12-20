@@ -9,7 +9,8 @@ class CarbonIntensity {
     return CarbonIntensity(
       from: json['from'],
       to: json['to'],
-      intensity: json['intensity']['actual'],
+      // Handle null 'actual' intensity
+      intensity: json['intensity']['actual'] ?? 0, // Default to 0 if null
     );
   }
 }
